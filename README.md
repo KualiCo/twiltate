@@ -4,7 +4,7 @@ Twiltate uses Twilio as a frontend for all on-call members on your team. You giv
 
 ## Getting Started
 Clone the repo, and run 
-```pip install -r requirements.txt
+```pip install -r requirements.txt;
 cp keys.json.example keys.json```
 Edit keys.json with relevant data, and just run twiltate.py! (better still, put it in a cron job)
 
