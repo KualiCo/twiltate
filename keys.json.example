@@ -1,0 +1,12 @@
+{
+  "twilio": {
+    "TWILIO_ACCOUNT_SID": "xxxxxxx",
+    "TWILIO_AUTH_TOKEN": "xxxxxxx"
+  },
+  "victorops": {
+    "vo_user": "my_cool_user",
+    "vo_pass": "my_super_secure_pw",
+    "vo_org": "my_org"
+  }
+}
+
