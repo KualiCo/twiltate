@@ -26,7 +26,7 @@ class UpdateTwilio(object):
                         self.client.messages.create(body="Urgent calls for your team are now routed to you", to=oncall, from_=callerid)
                     print("Updated", oncall, name)
             except KeyError:
-                print("OPS group ", name, " has no scheduled team to reference")
+                print("OPS group ", name, " has no scheduled phone number to reference")
 
 # Get keys for twilio
 with open('keys.json') as f:
