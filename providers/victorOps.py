@@ -25,7 +25,7 @@ class VictorOpsApi(object):
         teamdict = self.decoder.decode(teams.text)
         oncalllist = {}
         for team in teamdict:
-            oncall = team['oncall'][0]['oncall']
+            oncall = [x.get('oncall') for x in team['oncall'] if x.get('oncall') is not None]
             name = team['slug']
             oncalllist[name] = oncall
 
@@ -34,7 +34,7 @@ class VictorOpsApi(object):
     def get_contact_info(self):
         self.get_teams()
         for key, value in self.oncalllist.items():
-            user = value
+            user = value[0]
             methods = self.session.get(
                 url="https://portal.victorops.com/api/v1/org/kualico/profile/{user}/methods".format(user=user))
             methods_dict = self.decoder.decode(methods.text)
