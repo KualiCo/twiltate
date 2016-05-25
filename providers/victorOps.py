@@ -34,7 +34,10 @@ class VictorOpsApi(object):
     def get_contact_info(self):
         self.get_teams()
         for key, value in self.oncalllist.items():
-            user = value[0]
+            try:
+                user = value[0]
+            except IndexError:
+                continue
             methods = self.session.get(
                 url="https://portal.victorops.com/api/v1/org/kualico/profile/{user}/methods".format(user=user))
             methods_dict = self.decoder.decode(methods.text)

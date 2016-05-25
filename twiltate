@@ -1,0 +1,60 @@
+#!/app/python/bin/python
+# vim modeline (put ":set modeline" into your ~/.vimrc)
+# vim:set expandtab ts=4 sw=4 ai ft=python:
+
+import subprocess
+import requests
+import json
+from providers.victorOps import schedule
+from twilio.rest import TwilioRestClient
+
+class UpdateTwilio(object):
+    def __init__(self, key, token, notify=False):
+        self.key = key
+        self.token = token
+        self.client = TwilioRestClient(key, token)
+        self.numbers = self.client.phone_numbers.list()
+        self.voice_urls = "http://twimlets.com/forward?PhoneNumber={on_call}&CallerId={caller_id}&"
+        self.notify = notify
+
+    def update_numbers(self, team_numbers):
+        for number in self.numbers:
+            try:
+                name = number.friendly_name.lower()
+                callerid = number.phone_number[2:]
+                oncall = team_numbers[name]
+                url = self.voice_urls.format(on_call=oncall, caller_id=callerid)
+                if not number.voice_url == url:
+                    ok = number.update(voice_url=url)
+                    if self.notify:
+                        self.client.messages.create(body="Urgent calls for your team are now routed to you", to=oncall, from_=callerid)
+                    print("Updated", oncall, name)
+            except KeyError:
+                print("OPS group ", name, " has no scheduled phone number to reference")
+
+def dse(target, raise_error=True):
+    cmd = ["/app/ops/ephemer/bin/dse", "config", "get", target]
+    sub = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, outerr = sub.communicate()
+    if isinstance(output, bytes): # grr python 2/3
+        data = json.loads(output.decode())
+    if raise_error and sub.returncode != 0:
+        raise ValueError("Command failed: " + " ".join(cmd))
+    return data
+
+vo_cfg = dse("ops-victorops").get('sensitive').get('parameters')
+tw_cfg = dse("ops-twilio").get('sensitive').get('parameters')
+master_cfg = dse("ops-master").get('config').get('twiltate') # BJG: we could put the pwds above here... but I like it more granular
+
+# Fire!
+vo_schedule = schedule(vo_cfg['VICTOROPS_USER'],
+                       vo_cfg['VICTOROPS_PASS'],
+                       vo_cfg['VICTOROPS_ORG'])
+
+s = UpdateTwilio(tw_cfg['TWILIO_ACCOUNT_SID'],
+                 tw_cfg['TWILIO_AUTH_TOKEN'],
+                 notify=master_cfg.get('notify'))
+
+s.update_numbers(team_numbers=vo_schedule)
+
+requests.get(master_cfg.get('health-ping'))
